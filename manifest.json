@@ -1,0 +1,10 @@
+{
+  "name": "Patroli Digital - Swiss-Belhotel Airport YIA",
+  "short_name": "Patroli YIA",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#10141a",
+  "theme_color": "#10141a",
+  "orientation": "portrait",
+  "icons": []
+}
