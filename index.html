@@ -227,7 +227,7 @@
 
       <button class="btn btn-primary" id="loginBtn">Masuk</button>
     </div>
-    <div class="footer-note">Hubungi Digital Technology jika nama Anda belum terdaftar.</div>
+    <div class="footer-note">Hubungi ITM & AHRM, jika nama Anda belum terdaftar.</div>
   </div>
 
   <!-- ===== SCAN SCREEN ===== -->
@@ -361,7 +361,37 @@
 
   async function onScanSuccess(decodedText){
     stopScanner();
-    await submitScan(decodedText);
+    const kodeTitik = extractKodeTitik(decodedText);
+    await submitScan(kodeTitik);
+  }
+
+  // Menerima hasil scan berupa teks polos ("TTK-01") ATAU URL
+  // (misal "https://patroli-yia.app/?titik=TTK-01" atau ".../scan/TTK-01")
+  function extractKodeTitik(raw){
+    const text = raw.trim();
+
+    // Bukan URL -> pakai apa adanya
+    if(!/^https?:\/\//i.test(text)){
+      return text;
+    }
+
+    try{
+      const url = new URL(text);
+      // Coba ambil dari query param umum: titik, t, kode, code, id
+      const paramKeys = ['titik', 't', 'kode', 'code', 'id'];
+      for(const key of paramKeys){
+        const val = url.searchParams.get(key);
+        if(val) return val;
+      }
+      // Kalau tidak ada query param, ambil segmen terakhir dari path
+      // contoh: https://.../scan/TTK-01 -> "TTK-01"
+      const segments = url.pathname.split('/').filter(Boolean);
+      if(segments.length > 0) return segments[segments.length - 1];
+    }catch(e){
+      // bukan URL valid, fallback ke teks asli
+    }
+
+    return text;
   }
 
   async function submitScan(kodeTitik){
