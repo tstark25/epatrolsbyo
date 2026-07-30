@@ -202,10 +202,10 @@
 <div class="app">
 
   <div class="brand">
-    <div class="brand-mark">SB</div>
+    <div class="brand-mark">SBYO</div>
     <div class="brand-text">
-      <div class="title">Patroli Digital</div>
-      <div class="sub">Swiss-Belhotel Airport Yogyakarta — Security</div>
+      <div class="title">E-Patrol</div>
+      <div class="sub">Swiss-Belhotel Airport Yogyakarta - Security</div>
     </div>
   </div>
 
@@ -227,7 +227,7 @@
 
       <button class="btn btn-primary" id="loginBtn">Masuk</button>
     </div>
-    <div class="footer-note">Hubungi ITM atau AHRM, jika nama Anda belum terdaftar.</div>
+    <div class="footer-note">Hubungi ITM/AHRM jika nama Anda belum terdaftar.</div>
   </div>
 
   <!-- ===== SCAN SCREEN ===== -->
@@ -301,6 +301,7 @@
     const petugasId = el('petugasSelect').value;
     const pin = el('pinInput').value;
     const errBox = el('loginError');
+    const btn = el('loginBtn');
     errBox.textContent = '';
 
     if(!petugasId || !pin){
@@ -308,13 +309,35 @@
       return;
     }
 
-    // Verifikasi dilakukan saat scan pertama (server cek petugasId+pin),
-    // di sini kita simpan sementara dan tampilkan nama dari dropdown.
-    currentOfficer = { id: petugasId, pin, nama: el('petugasSelect').selectedOptions[0].text };
-    el('officerName').textContent = currentOfficer.nama;
-    history = [];
-    renderHistory();
-    showScreen('screen-scan');
+    btn.disabled = true;
+    btn.textContent = 'Memeriksa PIN...';
+
+    try{
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ petugasId, pin, type: 'login' })
+      });
+      const data = await res.json();
+
+      if(data.status !== 'success'){
+        errBox.textContent = data.message || 'PIN salah, coba lagi.';
+        el('pinInput').value = '';
+        el('pinInput').focus();
+        return;
+      }
+
+      currentOfficer = { id: petugasId, pin, nama: data.data.nama };
+      el('officerName').textContent = currentOfficer.nama;
+      el('pinInput').value = '';
+      history = [];
+      renderHistory();
+      showScreen('screen-scan');
+    }catch(err){
+      errBox.textContent = 'Gagal menghubungi server, cek koneksi internet.';
+    }finally{
+      btn.disabled = false;
+      btn.textContent = 'Masuk';
+    }
   });
 
   el('logoutBtn').addEventListener('click', () => {
